@@ -50,9 +50,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load tracks: %v", err)
 	}
-	// lib is passed to admin route handlers in Task 5.
-	_ = lib
-
 	// Build the Cloudflare R2 S3-compatible endpoint from the account ID.
 	// R2 accepts the same AWS SigV4 signing protocol as S3 — only the base
 	// endpoint needs to be overridden; no other SDK changes are required.
@@ -78,7 +75,7 @@ func main() {
 	})
 	presignClient := s3.NewPresignClient(s3Client)
 
-	// Wire handler with all dependencies resolved at startup. No global state —
+	// Wire auth handler with all dependencies resolved at startup. No global state —
 	// the Handler struct is the single source of shared dependencies.
 	h := &handlers.Handler{
 		PresignClient: presignClient,
@@ -86,6 +83,10 @@ func main() {
 		Bucket:        cfBucket,
 		TokenExpiry:   tokenExpiry,
 	}
+
+	// Wire library handler. Uses the ContentLibrary interface so the backing
+	// store can be swapped without touching this handler or its routes.
+	lh := &handlers.LibraryHandler{Library: lib}
 
 	r := chi.NewRouter()
 
@@ -115,9 +116,11 @@ func main() {
 
 	// Admin routes are protected by JWT middleware scoped to this group only.
 	// /auth/* and /health remain public — middleware is not applied globally.
-	// Route handlers are added in Tasks 4–5.
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(middleware.Authenticate(jwtSecret))
+		r.Get("/tracks", lh.ListTracks)
+		r.Post("/tracks", lh.AddTrack)
+		r.Delete("/tracks/{id}", lh.DeactivateTrack)
 	})
 
 	// Liveness probe. No auth required — it reveals nothing sensitive.

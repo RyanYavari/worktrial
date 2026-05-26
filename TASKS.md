@@ -5,7 +5,7 @@
 - [x] Task 2:  POST /auth/token (hardcoded user, JWT + S3 presigned URL)
 - [x] Task 3:  JWT middleware
 - [x] Task 4:  tracks.json + InMemoryLibrary + ContentLibrary interface
-- [ ] Task 5:  Admin CRUD API (GET/POST/DELETE /admin/tracks)
+- [x] Task 5:  Admin CRUD API (GET/POST/DELETE /admin/tracks)
 - [ ] Task 6:  Test full auth flow with curl
 - [ ] Task 7:  React login component
 - [ ] Task 8:  React player (HLS.js, play/pause, infinite loop)

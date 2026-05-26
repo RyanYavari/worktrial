@@ -3,9 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"sync"
+
+	"github.com/go-chi/chi/v5"
 )
+
+// ErrTrackNotFound is returned by library methods when a track ID does not exist.
+// Using a sentinel allows handlers to distinguish 404 from 500 via errors.Is
+// without comparing error message strings.
+var ErrTrackNotFound = errors.New("track not found")
 
 // Track represents a single audio track in the content library.
 // segment_path points at the HLS segments directory uploaded to Cloudflare R2.
@@ -103,11 +111,75 @@ func (l *InMemoryLibrary) DeactivateTrack(id string) error {
 
 	t, ok := l.tracks[id]
 	if !ok {
-		return errors.New("track not found")
+		return ErrTrackNotFound
 	}
 
 	// Map values are not addressable in Go — read, modify, write back.
 	t.IsActive = false
 	l.tracks[id] = t
 	return nil
+}
+
+// LibraryHandler holds the ContentLibrary dependency for admin route handlers.
+// Using the interface (not *InMemoryLibrary directly) keeps the handlers
+// decoupled from the backing store — only main.go wiring changes if the
+// store is swapped.
+type LibraryHandler struct {
+	Library ContentLibrary
+}
+
+// ListTracks handles GET /admin/tracks.
+// Returns all tracks regardless of is_active — active filtering is the client's concern.
+func (h *LibraryHandler) ListTracks(w http.ResponseWriter, r *http.Request) {
+	tracks, err := h.Library.ListTracks()
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	// ListTracks always returns a slice (never nil), so the response is [] not null.
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tracks)
+}
+
+// AddTrack handles POST /admin/tracks.
+// Inserts or overwrites the track keyed by its ID field.
+func (h *LibraryHandler) AddTrack(w http.ResponseWriter, r *http.Request) {
+	// Decode the track from the request body.
+	var track Track
+	if err := json.NewDecoder(r.Body).Decode(&track); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Library.AddTrack(track); err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	// 201 Created — no body needed.
+	w.WriteHeader(http.StatusCreated)
+}
+
+// DeactivateTrack handles DELETE /admin/tracks/{id}.
+// Soft-deletes by setting is_active=false. The track stays in the library so
+// in-flight presigned URLs that reference its segment path continue to resolve.
+func (h *LibraryHandler) DeactivateTrack(w http.ResponseWriter, r *http.Request) {
+	// Read the track ID from the Chi URL parameter.
+	id := chi.URLParam(r, "id")
+
+	err := h.Library.DeactivateTrack(id)
+	if err != nil {
+		// Distinguish "not found" from unexpected errors so clients receive a
+		// meaningful status code rather than a generic 500.
+		if errors.Is(err, ErrTrackNotFound) {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	// 204 No Content — soft delete succeeded, nothing to return.
+	w.WriteHeader(http.StatusNoContent)
 }
