@@ -16,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"auth/handlers"
+	"auth/middleware"
 )
 
 func main() {
@@ -101,6 +102,13 @@ func main() {
 	// /auth/refresh is a stub for the demo.
 	r.Post("/auth/token", h.Token)
 	r.Post("/auth/refresh", h.Refresh)
+
+	// Admin routes are protected by JWT middleware scoped to this group only.
+	// /auth/* and /health remain public — middleware is not applied globally.
+	// Route handlers are added in Tasks 4–5.
+	r.Route("/admin", func(r chi.Router) {
+		r.Use(middleware.Authenticate(jwtSecret))
+	})
 
 	// Liveness probe. No auth required — it reveals nothing sensitive.
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
