@@ -7,7 +7,7 @@
 - [x] Task 4:  tracks.json + InMemoryLibrary + ContentLibrary interface
 - [x] Task 5:  Admin CRUD API (GET/POST/DELETE /admin/tracks)
 - [x] Task 6:  Test full auth flow with curl
-- [ ] Task 7:  React login component
+- [x] Task 7:  React login component
 - [ ] Task 8:  React player (HLS.js, play/pause, infinite loop)
 - [ ] Task 9:  Full end to end test in browser
 - [ ] Task 10: KISS audit
