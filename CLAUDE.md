@@ -38,7 +38,7 @@ NO local stream service. Cloudflare replaces it entirely.
 
 ## Tech Stack
 - Backend: Go, Chi router, JWT (golang-jwt/jwt/v5)
-- Frontend: React, Vite, TypeScript, HLS.js
+- Frontend: React, Vite, JavaScript, HLS.js
 - Content Library: JSON file loaded at startup into in-memory map.
   No database. No Docker. Kristian confirmed persistence not required.
 - Audio: HLS segments pre-generated with FFmpeg, stored in segments/lofi/
@@ -112,10 +112,10 @@ wrangler r2 object put {bucket}/ --file segments/lofi/ --recursive
     ├── package.json
     ├── vite.config.ts
     └── src/
-        ├── App.tsx
+        ├── App.jsx
         └── components/
-            ├── Login.tsx
-            └── Player.tsx
+            ├── Login.jsx
+            └── Player.jsx
 
 NO backend/stream/ directory. Cloudflare replaces it.
 

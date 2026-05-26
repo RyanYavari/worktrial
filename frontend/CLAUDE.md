@@ -4,7 +4,7 @@
 Login form + audio player. Two components. One state machine.
 
 ## Stack
-React, TypeScript, Vite, HLS.js
+React, JavaScript, Vite, HLS.js
 
 ## Application States
 unauthenticated → login form visible, player hidden
@@ -40,9 +40,9 @@ Play/Pause toggle: audioElement.play() / audioElement.pause()
 Single button, text changes based on isPlaying state.
 
 ## What To Build
-- Login.tsx: form with username/password inputs, submit button
-- Player.tsx: play/pause button, minimal UI
-- App.tsx: state machine switching between Login and Player
+- Login.jsx: form with username/password inputs, submit button
+- Player.jsx: play/pause button, minimal UI
+- App.jsx: state machine switching between Login and Player
 
 ## What NOT To Build
 - No localStorage or sessionStorage
