@@ -33,6 +33,7 @@ func main() {
 	cfAccessKeyID := requireEnv("CF_ACCESS_KEY_ID")
 	cfSecretAccessKey := requireEnv("CF_SECRET_ACCESS_KEY")
 	cfBucket := requireEnv("CF_BUCKET_NAME")
+	tracksFile := requireEnv("TRACKS_FILE")
 
 	// Parse token expiry from env. Defaults to 4 hours — sufficient for a demo session.
 	// Presigned URL expiry is set to the same duration so both credentials expire together.
@@ -42,6 +43,15 @@ func main() {
 			tokenExpiry = time.Duration(n) * time.Hour
 		}
 	}
+
+	// Load the content library from tracks.json at startup. Fail fast if the file
+	// is missing or malformed — the admin API cannot serve content without it.
+	lib, err := handlers.NewInMemoryLibrary(tracksFile)
+	if err != nil {
+		log.Fatalf("failed to load tracks: %v", err)
+	}
+	// lib is passed to admin route handlers in Task 5.
+	_ = lib
 
 	// Build the Cloudflare R2 S3-compatible endpoint from the account ID.
 	// R2 accepts the same AWS SigV4 signing protocol as S3 — only the base

@@ -4,7 +4,7 @@
 - [x] Task 1:  Auth service skeleton (Chi router, health check, :8080)
 - [x] Task 2:  POST /auth/token (hardcoded user, JWT + S3 presigned URL)
 - [x] Task 3:  JWT middleware
-- [ ] Task 4:  tracks.json + InMemoryLibrary + ContentLibrary interface
+- [x] Task 4:  tracks.json + InMemoryLibrary + ContentLibrary interface
 - [ ] Task 5:  Admin CRUD API (GET/POST/DELETE /admin/tracks)
 - [ ] Task 6:  Test full auth flow with curl
 - [ ] Task 7:  React login component
