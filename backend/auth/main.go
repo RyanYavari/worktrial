@@ -57,11 +57,17 @@ func main() {
 
 	// Configure the AWS SDK with static R2 credentials.
 	// Region "auto" is required by Cloudflare R2 — it does not use AWS regions.
+	// AWS SDK v2 defaults to adding X-Amz-Checksum-Mode=ENABLED to presigned URLs.
+	// Cloudflare R2 does not support this parameter and returns InvalidArgument,
+	// causing every HLS.js segment request to fail. Setting both checksum options
+	// to "when required" suppresses the header from the presigned URL entirely.
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion("auto"),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			cfAccessKeyID, cfSecretAccessKey, "",
 		)),
+		config.WithRequestChecksumCalculation(aws.RequestChecksumCalculationWhenRequired),
+		config.WithResponseChecksumValidation(aws.ResponseChecksumValidationWhenRequired),
 	)
 	if err != nil {
 		log.Fatalf("failed to load AWS config: %v", err)
