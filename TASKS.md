@@ -18,7 +18,7 @@
       - Logic that can be expressed in fewer lines
       - Anything added speculatively beyond what Kristian asked
       Goal: every file should do exactly what was asked, nothing more.
-- [ ] Task 11: README + demo prep
+- [x] Task 11: README + demo prep
 
 ## Rules
 - Do not start the next task until the current one is tested and committed.
