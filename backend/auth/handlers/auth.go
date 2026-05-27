@@ -44,8 +44,8 @@ type tokenResponse struct {
 // data URL containing a fully-rewritten M3U8 playlist. Every segment line is
 // replaced with an individual R2 presigned URL so each segment request carries
 // its own SigV4 signature — satisfying AD #4 (stream protected by presigned
-// URLs) and AD #8 (ContentLibrary interface). HLS.js loads the data URL
-// directly; no Authorization header is used anywhere in the segment flow.
+// URLs). HLS.js loads the data URL directly; no Authorization header is used
+// anywhere in the segment flow.
 func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
 	// Decode JSON credentials from the request body.
 	var req tokenRequest

@@ -31,8 +31,8 @@ export default function Login({ onLogin }) {
       }
 
       const data = await res.json()
-      // Pass both credentials to App. stream_url is a Cloudflare R2 presigned URL
-      // that HLS.js will use directly in Task 8 — it must not be modified here.
+      // Pass both credentials to App. stream_url is a base64 data URL containing
+      // the rewritten M3U8 playlist — HLS.js loads it directly, do not modify it.
       onLogin(data.token, data.stream_url)
     } catch {
       // fetch threw — auth service is not reachable.

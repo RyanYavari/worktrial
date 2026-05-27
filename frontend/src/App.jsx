@@ -6,9 +6,9 @@ import Player from './components/Player'
 // unauthenticated — token is null, Login form is shown.
 // authenticated   — token is set, Player is shown.
 export default function App() {
-  // token and streamUrl live here so both the Player (Task 8) and any future
-  // components can access them. Neither is written to localStorage —
-  // a page refresh intentionally requires re-authentication.
+  // token and streamUrl live here so Player can receive streamUrl as a prop.
+  // Neither is written to localStorage — a page refresh intentionally
+  // requires re-authentication.
   const [token, setToken] = useState(null)
   const [streamUrl, setStreamUrl] = useState(null)
 

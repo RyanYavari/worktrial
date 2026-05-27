@@ -74,7 +74,7 @@ func (l *InMemoryLibrary) GetTrack(id string) (Track, error) {
 
 	t, ok := l.tracks[id]
 	if !ok {
-		return Track{}, errors.New("track not found")
+		return Track{}, ErrTrackNotFound
 	}
 	return t, nil
 }
