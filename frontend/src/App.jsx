@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import Login from './components/Login'
+import Player from './components/Player'
 
 // App is the top-level state machine with two states:
 // unauthenticated — token is null, Login form is shown.
-// authenticated   — token is set, Player is shown (placeholder until Task 8).
+// authenticated   — token is set, Player is shown.
 export default function App() {
   // token and streamUrl live here so both the Player (Task 8) and any future
   // components can access them. Neither is written to localStorage —
@@ -23,7 +24,7 @@ export default function App() {
     return <Login onLogin={handleLogin} />
   }
 
-  // Authenticated — Player component replaces this in Task 8.
-  // streamUrl is passed to Player so HLS.js can load the R2 presigned URL.
-  return <p style={{ fontFamily: 'sans-serif', padding: 40 }}>Logged in</p>
+  // Authenticated — pass streamUrl directly to Player. HLS.js loads it as-is;
+  // the SigV4 signature in the query string must not be modified.
+  return <Player streamUrl={streamUrl} />
 }

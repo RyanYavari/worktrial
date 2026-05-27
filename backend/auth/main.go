@@ -84,6 +84,7 @@ func main() {
 	// Wire auth handler with all dependencies resolved at startup. No global state —
 	// the Handler struct is the single source of shared dependencies.
 	h := &handlers.Handler{
+		S3Client:      s3Client,
 		PresignClient: presignClient,
 		JWTSecret:     jwtSecret,
 		Bucket:        cfBucket,

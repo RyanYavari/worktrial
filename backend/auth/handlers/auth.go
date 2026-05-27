@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,7 +20,8 @@ var users = map[string]string{"test": "test123"}
 // Handler holds dependencies injected at startup. All fields are set once in
 // main.go and are read-only after that — no locking needed.
 type Handler struct {
-	PresignClient *s3.PresignClient
+	S3Client      *s3.Client      // fetches playlist content from R2
+	PresignClient *s3.PresignClient // generates per-segment presigned URLs
 	JWTSecret     string
 	Bucket        string
 	TokenExpiry   time.Duration
@@ -37,8 +41,11 @@ type tokenResponse struct {
 }
 
 // Token handles POST /auth/token. On success it returns a signed JWT and a
-// Cloudflare R2 presigned URL. The presigned URL is handed to HLS.js; segments
-// are fetched directly from R2 — no Authorization header, no proxy.
+// data URL containing a fully-rewritten M3U8 playlist. Every segment line is
+// replaced with an individual R2 presigned URL so each segment request carries
+// its own SigV4 signature — satisfying AD #4 (stream protected by presigned
+// URLs) and AD #8 (ContentLibrary interface). HLS.js loads the data URL
+// directly; no Authorization header is used anywhere in the segment flow.
 func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
 	// Decode JSON credentials from the request body.
 	var req tokenRequest
@@ -71,10 +78,10 @@ func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a Cloudflare R2 presigned URL for the HLS playlist.
-	// R2 validates the embedded SigV4 signature at the edge — no Authorization
-	// header is needed on HLS.js segment requests.
-	streamURL, err := generatePresignedURL(r.Context(), h.PresignClient, h.Bucket, "playlist.m3u8", h.TokenExpiry)
+	// Fetch the static playlist from R2, rewrite each segment line with an
+	// individual presigned URL, and encode as a data URL. HLS.js loads the
+	// data URL directly — no new endpoint required.
+	streamURL, err := buildPresignedPlaylist(r.Context(), h.S3Client, h.PresignClient, h.Bucket, h.TokenExpiry)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -90,6 +97,55 @@ func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
 // Not implemented for the demo — the 4-hour JWT window is sufficient per Kristian.
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+// buildPresignedPlaylist fetches the static M3U8 from R2, rewrites every segment
+// filename line with an individually presigned URL, and returns the result as a
+// base64 data URL. A data URL lets HLS.js call hls.loadSource() without a new
+// endpoint. Segment presigned URLs share the same expiry as the JWT so both
+// credentials expire together. M3U8 directive lines (starting with '#') and
+// empty lines are passed through unchanged — all FFmpeg timing data is preserved.
+func buildPresignedPlaylist(ctx context.Context, s3Client *s3.Client, presignClient *s3.PresignClient, bucket string, expiry time.Duration) (string, error) {
+	// Fetch the static playlist from R2 using the same client configuration
+	// (endpoint, credentials) used for presigning — no extra setup required.
+	result, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String("playlist.m3u8"),
+	})
+	if err != nil {
+		return "", err
+	}
+	defer result.Body.Close()
+
+	// Read the full playlist. At 14 segments the file is ~350 bytes.
+	raw, err := io.ReadAll(result.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Walk each line. Directive lines ('#') and blank lines are kept verbatim.
+	// Segment filename lines are replaced with presigned URLs so R2 validates
+	// the SigV4 signature before serving each audio segment.
+	lines := strings.Split(string(raw), "\n")
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		segURL, err := generatePresignedURL(ctx, presignClient, bucket, trimmed, expiry)
+		if err != nil {
+			return "", err
+		}
+		lines[i] = segURL
+	}
+
+	// Encode the rewritten playlist as a base64 data URL. All segment lines
+	// are now absolute presigned URLs, so the data URL base path is irrelevant
+	// to HLS.js segment resolution.
+	rewritten := strings.Join(lines, "\n")
+	dataURL := "data:application/vnd.apple.mpegurl;base64," +
+		base64.StdEncoding.EncodeToString([]byte(rewritten))
+	return dataURL, nil
 }
 
 // generatePresignedURL returns an S3 presigned GET URL for an object in Cloudflare R2.
