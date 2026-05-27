@@ -1,0 +1,8 @@
+[
+  {
+    "id": "lofi",
+    "name": "Lofi Beats",
+    "segment_path": "segments/lofi/",
+    "is_active": true
+  }
+]
