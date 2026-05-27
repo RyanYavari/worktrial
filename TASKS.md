@@ -9,7 +9,7 @@
 - [x] Task 6:  Test full auth flow with curl
 - [x] Task 7:  React login component
 - [x] Task 8:  React player (HLS.js, play/pause, infinite loop)
-- [ ] Task 9:  Full end to end test in browser
+- [x] Task 9:  Full end to end test in browser
 - [ ] Task 10: KISS audit
       Claude reviews every file written during this project and
       flags anything that can be simplified. Checks for:
