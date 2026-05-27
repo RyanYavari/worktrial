@@ -63,6 +63,18 @@ Called on every POST /auth/token. Returns real Cloudflare R2
 presigned URL. Not a stub. Not a placeholder.
 R2 endpoint: https://{CF_ACCOUNT_ID}.r2.cloudflarestorage.com
 
+## R2 Checksum Compatibility Fix
+AWS SDK v2 v1.73.0+ adds X-Amz-Checksum-Mode=ENABLED to 
+presigned URLs by default. Cloudflare R2 does not support 
+this parameter and rejects requests with InvalidArgument.
+
+Fix applied in config.LoadDefaultConfig:
+  config.WithRequestChecksumCalculation(aws.RequestChecksumCalculationWhenRequired)
+  config.WithResponseChecksumValidation(aws.ResponseChecksumValidationWhenRequired)
+
+Do NOT remove these two lines. Removing them breaks R2 
+presigned URL generation.
+
 ## JWT Middleware
 Auth service middleware reads Authorization: Bearer {token} header.
 Query parameter pattern is NOT used here.

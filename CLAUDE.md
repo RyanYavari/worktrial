@@ -1,8 +1,8 @@
 # Lofi Stream — Claude Code Context
 
 ## Project Overview
-Authenticated lofi audio streaming system. Two Go/Chi backend 
-services, React/Vite frontend. Demo runs locally. Designed to 
+Authenticated lofi audio streaming system. Single Go/Chi backend service,
+ React/Vite frontend. Demo runs locally. Designed to 
 scale to 100k concurrent users via Cloudflare R2 + HLS.
 
 ## Current Build Target
@@ -38,8 +38,8 @@ NO local stream service. Cloudflare replaces it entirely.
 
 ## Tech Stack
 - Backend: Go, Chi router, JWT (golang-jwt/jwt/v5)
-- Frontend: React, Vite, JavaScript, HLS.js
 - Content Library: JSON file loaded at startup into in-memory map.
+- Frontend: React, Vite, JavaScript, HLS.js
   No database. No Docker. Kristian confirmed persistence not required.
 - Audio: HLS segments pre-generated with FFmpeg, stored in segments/lofi/
 
@@ -67,6 +67,9 @@ generateSignedURL() function already present in auth service.
 - Surgical changes only. Touch nothing outside the task scope.
 - No speculative features. Build exactly what was asked.
 - Match existing patterns in every file.
+- Comment all code. Every function, every block of logic.
+  Comments explain why, not just what. Keep the comments brief, concise, but dont omit important details. 
+  Relate comments to important architectural decisions if appropriate. 
 
 ## Common Commands
 # Start auth service
@@ -152,3 +155,7 @@ No server-side loop logic.
 - Implement local segment serving
 - Add user registration or persistent session storage
 - Generate dynamic playlist content anywhere
+
+## Current Build Status
+Always read TASKS.md at the start of every task to know what has been completed and what comes next.
+
